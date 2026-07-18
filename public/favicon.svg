@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#171C27"/>
+  <text x="50" y="38" font-family="serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">S</text>
+  <circle cx="62" cy="42" r="14" fill="#E53935"/>
+  <text x="62" y="40" font-family="serif" font-size="22" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">a</text>
+  <text x="50" y="72" font-family="serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">jiIn</text>
+</svg>
