@@ -45,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href={fontUrl} rel="stylesheet" />
+        <meta name="google-site-verification" content="L2emkQq1TC3ltHweiy_0SBxCeOYuq6xGpDrtI46LM4k" />
         {/* Schema.org Restaurant */}
         <script
           type="application/ld+json"
