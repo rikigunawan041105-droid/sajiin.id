@@ -1,13 +1,23 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
-import { useSajiin } from "@/lib/context";
+import { SajiinProvider, useSajiin } from "@/lib/context";
 import { formatPrice } from "@/lib/data";
 import { Lock, LayoutDashboard, LogOut, UtensilsCrossed, ClipboardList, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function AdminPage() {
+export default function AdminPageWrapper() {
+  return (
+    <SajiinProvider>
+      <AdminPage />
+    </SajiinProvider>
+  );
+}
+
+function AdminPage() {
   const { isAdminLoggedIn, adminLogin, adminLogout, orders, foods, updateOrderStatusFn } = useSajiin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
