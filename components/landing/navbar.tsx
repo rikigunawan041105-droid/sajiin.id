@@ -1,17 +1,14 @@
 "use client";
 
 import { useSajiin } from "@/lib/context";
-import { ShoppingBag, Clock, LogIn, LogOut, LayoutDashboard } from "lucide-react";
+import { ShoppingBag, Clock, User } from "lucide-react";
+import Link from "next/link";
 
 export default function Navbar() {
   const {
     totalCartItems,
     setShowCart,
     setShowHistory,
-    setShowAdminLogin,
-    isAdminLoggedIn,
-    setShowAdminDashboard,
-    adminLogout,
     scrollToSection,
   } = useSajiin();
 
@@ -57,26 +54,12 @@ export default function Navbar() {
               )}
             </button>
 
-            {isAdminLoggedIn ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowAdminDashboard(true)}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-red text-white text-xs rounded-lg hover:bg-red-light transition-colors"
-                >
-                  <LayoutDashboard size={14} /> Dashboard
-                </button>
-                <button onClick={adminLogout} className="p-2 text-white/50 hover:text-white transition-colors">
-                  <LogOut size={18} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAdminLogin(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/70 hover:text-white transition-colors"
-              >
-                <LogIn size={14} /> Admin
-              </button>
-            )}
+            <Link
+              href="/admin"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/70 hover:text-white transition-colors"
+            >
+              <User size={14} /> Admin
+            </Link>
           </div>
         </div>
       </div>
