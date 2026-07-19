@@ -13,8 +13,6 @@ import CartDrawer from "@/components/landing/cart-drawer";
 import Checkout from "@/components/landing/checkout";
 import History from "@/components/landing/history";
 import MenuDetail from "@/components/landing/menu-detail";
-import AdminLogin from "@/components/landing/admin-login";
-import AdminDashboard from "@/components/landing/admin-dashboard";
 import Toasts from "@/components/ui/toast";
 
 export default function Home() {
@@ -27,8 +25,6 @@ export default function Home() {
       <Checkout />
       <History />
       <MenuDetail />
-      <AdminLogin />
-      <AdminDashboard />
 
       {/* Sections */}
       <Navbar />
