@@ -39,6 +39,15 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface CartItem {
+  food_id: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+  max_stock: number;
+}
+
 const foodsRef = collection(db, "foods");
 const ordersRef = collection(db, "orders");
 const outletsRef = collection(db, "outlets");

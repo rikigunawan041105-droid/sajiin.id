@@ -5,7 +5,7 @@ import { formatPrice } from "@/lib/data";
 import { X, LayoutDashboard, ClipboardList, UtensilsCrossed, BarChart3 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { showAdminDashboard, setShowAdminDashboard, orders, foods, updateOrderStatus } = useSajiin();
+  const { showAdminDashboard, setShowAdminDashboard, orders, foods, updateOrderStatusFn } = useSajiin();
 
   if (!showAdminDashboard) return null;
 
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
                       <p className="text-white/40 text-xs mt-1">{o.date} {o.time} • {formatPrice(o.total_price)}</p>
                     </div>
                     <button
-                      onClick={() => updateOrderStatus(o.order_number, "Confirmed")}
+                      onClick={() => updateOrderStatusFn(o.order_number, "Confirmed")}
                       className="px-4 py-2 bg-red hover:bg-red-light text-white text-xs font-semibold rounded-lg transition-colors"
                     >
                       Konfirmasi
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
                         <td className="py-3">
                           <select
                             value={o.status}
-                            onChange={(e) => updateOrderStatus(o.order_number, e.target.value)}
+                            onChange={(e) => updateOrderStatusFn(o.order_number, e.target.value)}
                             className="bg-white/5 border border-white/10 text-white text-xs rounded-lg px-2 py-1"
                           >
                             {["Pending", "Confirmed", "Cooking", "Ready", "Completed", "Cancelled"].map((s) => (
