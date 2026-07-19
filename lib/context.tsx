@@ -1,54 +1,36 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { CartItem, Order, foods as allFoods } from "@/lib/data";
+import { FoodItem, Order, CartItem, getFoods, getOrders, createOrder, updateOrderStatus } from "@/lib/firestore";
 
 interface SajiinContextType {
-  // Foods
-  foods: typeof allFoods;
+  foods: FoodItem[];
   selectedCategory: string;
   setSelectedCategory: (c: string) => void;
-  filteredFoods: typeof allFoods;
-  selectedFood: (typeof allFoods)[0] | null;
-  setSelectedFood: (f: (typeof allFoods)[0] | null) => void;
-
-  // Cart
+  filteredFoods: FoodItem[];
+  selectedFood: FoodItem | null;
+  setSelectedFood: (f: FoodItem | null) => void;
   cart: CartItem[];
   addToCart: (food_id: string) => void;
   updateQty: (food_id: string, qty: number) => void;
   removeFromCart: (food_id: string) => void;
   totalCartItems: number;
   totalCartPrice: number;
-
-  // Checkout
   isCheckoutOpen: boolean;
   setIsCheckoutOpen: (o: boolean) => void;
   isConfirmed: boolean;
   setIsConfirmed: (o: boolean) => void;
-  submitOrder: (data: {
-    customer_name: string;
-    customer_whatsapp: string;
-    date: string;
-    time: string;
-    notes: string;
-    payment_method: string;
-  }) => void;
+  submitOrder: (data: any) => void;
   lastOrder: Order | null;
-
-  // History
   orders: Order[];
   showHistory: boolean;
   setShowHistory: (s: boolean) => void;
-
-  // Admin
   isAdminLoggedIn: boolean;
-  adminLogin: (email: string, password: string) => boolean;
+  adminLogin: (email: string, password: string) => Promise<boolean>;
   adminLogout: () => void;
   showAdminDashboard: boolean;
   setShowAdminDashboard: (s: boolean) => void;
-  updateOrderStatus: (orderNumber: number, status: string) => void;
-
-  // UI
+  updateOrderStatusFn: (orderNumber: number, status: string) => Promise<void>;
   showCart: boolean;
   setShowCart: (s: boolean) => void;
   showAdminLogin: boolean;
@@ -60,19 +42,16 @@ interface SajiinContextType {
   addToast: (msg: string, type?: "success" | "error" | "info") => void;
 }
 
-interface Toast {
-  id: number;
-  message: string;
-  type: "success" | "error" | "info";
-}
+interface Toast { id: number; message: string; type: "success" | "error" | "info"; }
 
 const SajiinContext = createContext<SajiinContextType | null>(null);
 
 export function SajiinProvider({ children }: { children: ReactNode }) {
-  const [selectedCategory, setSelectedCategory] = useState("semua");
-  const [selectedFood, setSelectedFood] = useState<(typeof allFoods)[0] | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [foods, setFoods] = useState<FoodItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("semua");
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -84,68 +63,44 @@ export function SajiinProvider({ children }: { children: ReactNode }) {
   const [activeAdminTab, setActiveAdminTab] = useState("overview");
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Load cart & orders from localStorage
-  useEffect(() => {
-    const savedCart = localStorage.getItem("sajiin_cart");
-    if (savedCart) setCart(JSON.parse(savedCart));
-    const savedOrders = localStorage.getItem("sajiin_orders");
-    if (savedOrders) setOrders(JSON.parse(savedOrders));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("sajiin_cart", JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem("sajiin_orders", JSON.stringify(orders));
-  }, [orders]);
-
   const addToast = useCallback((message: string, type: "success" | "error" | "info" = "info") => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
   }, []);
 
-  // Filtered foods
-  const filteredFoods =
-    selectedCategory === "semua"
-      ? allFoods
-      : allFoods.filter((f) => f.category === selectedCategory);
+  // Load data dari Firestore
+  useEffect(() => {
+    getFoods().then(setFoods).catch(() => {});
+    getOrders().then(setOrders).catch(() => {});
+  }, []);
 
-  // Cart
-  const addToCart = useCallback(
-    (food_id: string) => {
-      const food = allFoods.find((f) => f.food_id === food_id);
-      if (!food || !food.available) return;
-      setCart((prev) => {
-        const existing = prev.find((c) => c.food_id === food_id);
-        if (existing) {
-          if (existing.quantity >= food.stock) return prev;
-          return prev.map((c) =>
-            c.food_id === food_id ? { ...c, quantity: c.quantity + 1 } : c
-          );
-        }
-        return [
-          ...prev,
-          {
-            food_id: food.food_id,
-            name: food.name,
-            price: food.price,
-            image: food.image,
-            quantity: 1,
-            max_stock: food.stock,
-          },
-        ];
-      });
-      addToast(`${food.name} ditambahkan ke keranjang!`, "success");
-    },
-    [addToast]
-  );
+  // Load cart dari localStorage
+  useEffect(() => {
+    const savedCart = localStorage.getItem("sajiin_cart");
+    if (savedCart) setCart(JSON.parse(savedCart));
+  }, []);
+
+  useEffect(() => { localStorage.setItem("sajiin_cart", JSON.stringify(cart)); }, [cart]);
+
+  const filteredFoods = selectedCategory === "semua" ? foods : foods.filter((f) => f.category === selectedCategory);
+
+  const addToCart = useCallback((food_id: string) => {
+    const food = foods.find((f) => f.food_id === food_id);
+    if (!food || !food.available) return;
+    setCart((prev) => {
+      const existing = prev.find((c) => c.food_id === food_id);
+      if (existing) {
+        if (existing.quantity >= food.stock) return prev;
+        return prev.map((c) => (c.food_id === food_id ? { ...c, quantity: c.quantity + 1 } : c));
+      }
+      return [...prev, { food_id: food.food_id, name: food.name, price: food.price, image: food.image, quantity: 1, max_stock: food.stock }];
+    });
+    addToast(`${food.name} ditambahkan ke keranjang!`, "success");
+  }, [foods, addToast]);
 
   const updateQty = useCallback((food_id: string, qty: number) => {
-    setCart((prev) =>
-      prev.map((c) => (c.food_id === food_id ? { ...c, quantity: Math.max(0, Math.min(qty, c.max_stock)) } : c))
-    );
+    setCart((prev) => prev.map((c) => (c.food_id === food_id ? { ...c, quantity: Math.max(0, Math.min(qty, c.max_stock)) } : c)));
   }, []);
 
   const removeFromCart = useCallback((food_id: string) => {
@@ -155,19 +110,10 @@ export function SajiinProvider({ children }: { children: ReactNode }) {
   const totalCartItems = cart.reduce((sum, c) => sum + c.quantity, 0);
   const totalCartPrice = cart.reduce((sum, c) => sum + c.price * c.quantity, 0);
 
-  // Submit Order
-  const submitOrder = useCallback(
-    (data: {
-      customer_name: string;
-      customer_whatsapp: string;
-      date: string;
-      time: string;
-      notes: string;
-      payment_method: string;
-    }) => {
-      const orderNumber = orders.length > 0 ? Math.max(...orders.map((o) => o.order_number)) + 1 : 1001;
-      const newOrder: Order = {
-        order_number: orderNumber,
+  const submitOrder = useCallback(async (data: any) => {
+    try {
+      const order: Order = {
+        order_number: Date.now() % 100000,
         customer_name: data.customer_name,
         customer_whatsapp: data.customer_whatsapp,
         date: data.date,
@@ -176,41 +122,39 @@ export function SajiinProvider({ children }: { children: ReactNode }) {
         total_price: totalCartPrice + 2000,
         payment_method: data.payment_method,
         status: "Pending",
-        items: cart.map((c) => ({
-          food_id: c.food_id,
-          name: c.name,
-          price: c.price,
-          quantity: c.quantity,
-        })),
+        items: cart.map((c) => ({ food_id: c.food_id, name: c.name, price: c.price, quantity: c.quantity })),
+        createdAt: new Date().toISOString(),
       };
-      setOrders((prev) => [...prev, newOrder]);
-      setLastOrder(newOrder);
+      await createOrder(order);
+      setOrders((prev) => [order, ...prev]);
+      setLastOrder(order);
       setIsConfirmed(true);
-    },
-    [cart, orders, totalCartPrice]
-  );
+      setCart([]);
+      addToast("Pesanan berhasil dikirim!", "success");
+    } catch { addToast("Gagal mengirim pesanan", "error"); }
+  }, [cart, totalCartPrice, addToast]);
 
-  // Admin
-  const adminLogin = useCallback((email: string, password: string) => {
+  const adminLogin = useCallback(async (email: string, password: string) => {
     if (email === "admin@sajiin.com" && password === "admin123") {
       setIsAdminLoggedIn(true);
       setShowAdminLogin(false);
       setShowAdminDashboard(true);
       return true;
     }
+    addToast("Email atau password salah", "error");
     return false;
-  }, []);
+  }, [addToast]);
 
   const adminLogout = useCallback(() => {
     setIsAdminLoggedIn(false);
     setShowAdminDashboard(false);
   }, []);
 
-  const updateOrderStatus = useCallback((orderNumber: number, status: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.order_number === orderNumber ? { ...o, status } : o))
-    );
-  }, []);
+  const updateOrderStatusFn = useCallback(async (orderNumber: number, status: string) => {
+    await updateOrderStatus(orderNumber, status);
+    setOrders((prev) => prev.map((o) => (o.order_number === orderNumber ? { ...o, status } : o)));
+    addToast(`Status pesanan #${orderNumber} diubah`, "success");
+  }, [addToast]);
 
   const scrollToSection = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -218,46 +162,15 @@ export function SajiinProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SajiinContext.Provider
-      value={{
-        foods: allFoods,
-        selectedCategory,
-        setSelectedCategory,
-        filteredFoods,
-        selectedFood,
-        setSelectedFood,
-        cart,
-        addToCart,
-        updateQty,
-        removeFromCart,
-        totalCartItems,
-        totalCartPrice,
-        isCheckoutOpen,
-        setIsCheckoutOpen,
-        isConfirmed,
-        setIsConfirmed,
-        submitOrder,
-        lastOrder,
-        orders,
-        showHistory,
-        setShowHistory,
-        isAdminLoggedIn,
-        adminLogin,
-        adminLogout,
-        showAdminDashboard,
-        setShowAdminDashboard,
-        updateOrderStatus,
-        showCart,
-        setShowCart,
-        showAdminLogin,
-        setShowAdminLogin,
-        activeAdminTab,
-        setActiveAdminTab,
-        scrollToSection,
-        toasts,
-        addToast,
-      }}
-    >
+    <SajiinContext.Provider value={{
+      foods, selectedCategory, setSelectedCategory, filteredFoods, selectedFood, setSelectedFood,
+      cart, addToCart, updateQty, removeFromCart, totalCartItems, totalCartPrice,
+      isCheckoutOpen, setIsCheckoutOpen, isConfirmed, setIsConfirmed, submitOrder, lastOrder,
+      orders, showHistory, setShowHistory, isAdminLoggedIn, adminLogin, adminLogout,
+      showAdminDashboard, setShowAdminDashboard, updateOrderStatusFn,
+      showCart, setShowCart, showAdminLogin, setShowAdminLogin, activeAdminTab, setActiveAdminTab,
+      scrollToSection, toasts, addToast,
+    }}>
       {children}
     </SajiinContext.Provider>
   );

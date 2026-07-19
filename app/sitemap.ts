@@ -1,10 +1,12 @@
 import { MetadataRoute } from "next";
-import { foods, outlets } from "@/lib/data";
+import { foods } from "@/lib/data";
+
+const BASE_URL = "https://sajiin.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [
     {
-      url: "https://sajiin.vercel.app",
+      url: BASE_URL,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: 1.0,
@@ -12,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const foodPages = foods.map((food) => ({
-    url: `https://sajiin.vercel.app/?menu=${food.food_id}`,
+    url: `${BASE_URL}/?menu=${food.food_id}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.8,
