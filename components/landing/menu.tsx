@@ -1,11 +1,11 @@
 "use client";
 
 import { useSajiin } from "@/lib/context";
-import { foods, formatPrice } from "@/lib/data";
+import { formatPrice } from "@/lib/data";
 import { Star, Flame, Clock, AlertCircle } from "lucide-react";
 
 export default function Menu() {
-  const { selectedCategory, setSelectedCategory, filteredFoods, setSelectedFood, addToCart, scrollToSection } = useSajiin();
+  const { selectedCategory, setSelectedCategory, filteredFoods, setSelectedFood, addToCart } = useSajiin();
 
   const categories = [
     { id: "semua", label: "Semua" },
@@ -81,15 +81,10 @@ export default function Menu() {
                     )}
                   </div>
 
-                  {/* Low Stock / Sold Out */}
+                  {/* Sold Out */}
                   {!food.available && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                       <span className="text-white font-bold text-lg bg-black/50 px-4 py-2 rounded-xl">Habis Terjual</span>
-                    </div>
-                  )}
-                  {food.available && food.stock > 0 && food.stock <= 5 && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-amber-500 text-white text-xs text-center py-1 font-medium">
-                      ⚠️ Sisa {food.stock} porsi lagi!
                     </div>
                   )}
                 </div>
@@ -116,7 +111,7 @@ export default function Menu() {
                     <span className="text-lg font-bold text-red">{formatPrice(food.price)}</span>
                     <button
                       onClick={() => addToCart(food.food_id)}
-                      disabled={!food.available || food.stock === 0}
+                      disabled={!food.available}
                       className="px-4 py-2 bg-dark text-white text-sm font-semibold rounded-xl hover:bg-dark/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {!food.available ? "Habis" : "Tambah"}
